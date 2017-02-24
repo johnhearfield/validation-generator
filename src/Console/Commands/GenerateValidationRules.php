@@ -3,7 +3,7 @@
 namespace GillidandaWeb\ValidationGenerator\Console\Commands;
 
 use Illuminate\Console\Command;
-use DB;
+use GillidandaWeb\ValidationGenerator\ValidationGenerator;
 
 class GenerateValidationRules extends Command
 {
@@ -12,7 +12,7 @@ class GenerateValidationRules extends Command
      *
      * @var string
      */
-    protected $signature = 'generate:validation {--t|table? : Limit to table} {--c|column? : Limit to column}';
+    protected $signature = 'generate:validation {table?} {column?}';
 
     /**
      * The console command description.
@@ -21,14 +21,17 @@ class GenerateValidationRules extends Command
      */
     protected $description = 'Generate validation rules from db schema';
     
+    public $generator;
+    
     /**
      * Create a new command instance.
      *
      * @return void
      */
-    public function __construct()
+    public function __construct(ValidationGenerator $generator)
     {
         parent::__construct();
+        $this->generator = $generator;
     }
 
     /**
