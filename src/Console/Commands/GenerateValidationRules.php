@@ -43,6 +43,19 @@ class GenerateValidationRules extends Command
     {
         $table = $this->argument('table');
         $column = $this->argument('column');
-        dump('done', $table, $column);
+        
+        if ($table) {
+            if ($column) {
+                var_export($this->generator->getValidationRules($table, $column)->toArray());
+                return;
+            }
+            
+            var_export($this->generator->getValidationRules($table)->toArray());
+            return;
+        }
+        
+        var_export($this->generator->getValidationRules()->toArray());
+        return;
+
     }
 }
