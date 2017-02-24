@@ -12,7 +12,7 @@ class GenerateValidationRules extends Command
      *
      * @var string
      */
-    protected $signature = 'generate:validation';
+    protected $signature = 'generate:validation {--t|table? : Limit to table} {--c|column? : Limit to column}';
 
     /**
      * The console command description.
@@ -38,6 +38,8 @@ class GenerateValidationRules extends Command
      */
     public function handle()
     {
-        
+        $table = $this->argument('table');
+        $column = $this->argument('column');
+        dump('done', $table, $column);
     }
 }

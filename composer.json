@@ -1,0 +1,34 @@
+{
+    "name": "gillidandaweb/validation-generator",
+    "description": "Generate Laravel 5 validation rules from database schema.",
+    "keywords": [
+        "laravel",
+        "database",
+        "db",
+        "console",
+        "artisan",
+        "validation",
+        "generate"
+    ],
+    "homepage": "http://github.com/gillidandaweb/validation-generator",
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Fraser Murray",
+            "email": "fraser@gillidanda.co.uk",
+            "homepage": "https://gillidanda.co.uk"
+        }
+    ],
+    "require": {
+        "php": ">=7.1|5.6",
+        "doctrine/dbal": "^2.5"
+    },
+    "autoload": {
+        "files": [
+        ],
+        "psr-4": {
+            "GillidandaWeb\\ValidationGenerator\\": "src"
+        }
+    }
+}
