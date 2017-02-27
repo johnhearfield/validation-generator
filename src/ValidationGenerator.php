@@ -3,7 +3,9 @@
 namespace GillidandaWeb\ValidationGenerator;
 
 use DB;
+use PDO;
 use Doctrine\DBAL\Schema\Column;
+use Doctrine\DBAL\DBALException;
 
 class ValidationGenerator
 {
@@ -21,21 +23,29 @@ class ValidationGenerator
         if ($table) {
             
         } else {
-            $tables = collect($this->schemaManager->listTableNames());
+            $tables = collect($this->schemaManager->listTableNames())->slice(1);
         }
         
-        $tables->map(function ($tableName) {
+        $rules = $tables->map(function ($tableName) {
            return $this->getTableValidationRules($tableName);
         });
+        
+        dd($rules);
     }
     
     public function getTableValidationRules($tableName)
     {
-        $columns = collect($this->schemaManager->listTableColumns($tableName));
-        
-        $columns->map(function ($column) {
-            return $this->getColumnRules($column); 
-        });
+        try {
+            $columns = collect($this->schemaManager->listTableColumns($tableName));
+
+            $rules = $columns->map(function ($column) {
+                return $this->getColumnRules($column); 
+            });
+            
+            return $rules;
+        } catch (DBALException $e) {
+            return [];
+        }
     }
     
     private function getColumnRules(Column $column)
@@ -74,19 +84,36 @@ class ValidationGenerator
   41 => "getQuotedName"
         */
         
+        $rules['raw'] = $column->toArray();
+        
+        // assume no rules
+        if ($column->getAutoincrement()) {
+            return $rules; 
+        } 
+        
         if ($column->getNotnull()) {
             $rules['required'] = null; 
         } else {
             $rules['nullable'] = null; 
         }
         
-        switch ($column->getType()) {
-            case 'boolean':
+        switch ($column->getType()->getBindingType()) {
+            case PDO::PARAM_INT:
+                $rules['integer'] = null;
+                break;
+                
+            case PDO::PARAM_BOOL:
                 $rules['boolean'] = null;
                 break;
                 
-            case 'boolean':
-                $rules['boolean'] = null;
+            case PDO::PARAM_STR:
+                switch(get_class($column->getType())) {
+                    case 'Doctrine\DBAL\Types\DateTimeType':
+                        dd($column);
+                        break;
+                }
+                $rules['max'] = $column->getLength();
+                $rules['type'] = $column->getType();
                 break;
                 
                 
@@ -94,6 +121,7 @@ class ValidationGenerator
                    
         }
         
+        return $rules;
         dd($column->getType()->getBindingType(), $rules);
     }
 }
