@@ -13,7 +13,7 @@ class GenerateValidationRules extends Command
      *
      * @var string
      */
-    protected $signature = 'generate:validation {table?} {column?} {--output=controller}';
+    protected $signature = 'generate:validation {table?} {column?} {--output=controller} {--ignoreuser}';
 
     /**
      * The console command description.
@@ -77,6 +77,7 @@ class GenerateValidationRules extends Command
         $table = $this->argument('table');
         $column = $this->argument('column');
         $output = $this->option('output');
+        $isIgnoreUser = $this->option('ignoreuser');
         
         if (!in_array($output, ['formrequest', 'controller'])) {
             throw new \Exception('Invalid output option');
@@ -102,18 +103,20 @@ class GenerateValidationRules extends Command
             return;
         }
         
-        $this->generator->getValidationRules()->each(function ($rules, $tableName) use ($stubPath) {
-            $this->buildRules($stubPath, $rules, $tableName);
+        $this->generator->getValidationRules(null, null, $isIgnoreUser)->each(function ($rules, $tableName) use ($stubPath, $isIgnoreUser) {
+            $this->buildRules($stubPath, $rules, $tableName, $isIgnoreUser);
         });
+        
         return;
-
     }
     
     /**
      * Build the rules.
      *
-     * @param  string  $name
-     * @return string
+     * @param  string  $stubPath
+     * @param  Collection  $rules
+     * @param  string  $tableName
+     * @return GenerateValidationRules
      */
     protected function buildRules($stubPath, $rules, $tableName)
     {

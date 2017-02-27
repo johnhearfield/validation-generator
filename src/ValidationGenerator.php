@@ -18,7 +18,7 @@ class ValidationGenerator
             
     }
     
-    public function getValidationRules($table = null, $column = null)
+    public function getValidationRules($table = null, $column = null, $isIgnoreUser = false)
     {
         if ($table) {
             
@@ -26,18 +26,19 @@ class ValidationGenerator
             $tables = collect($this->schemaManager->listTableNames());
         }
         
-        return $tables->mapWithKeys(function ($tableName) {
-           return [$tableName => $this->getTableValidationRules($tableName)];
+        return $tables->mapWithKeys(function ($tableName) use ($isIgnoreUser) {
+           return [$tableName => $this->getTableValidationRules($tableName, $isIgnoreUser)];
         });
     }
     
-    public function getTableValidationRules($tableName)
+    public function getTableValidationRules($tableName, $isIgnoreUser)
     {
         try {
             $columns = collect($this->schemaManager->listTableColumns($tableName));
 
-            $tableRules = $columns->filter(function ($column) {
-                    return !preg_match('/\_at$/', $column->getName());
+            $tableRules = $columns->reject(function ($column) use ($isIgnoreUser) {
+                    return preg_match('/\_at$/', $column->getName())
+                        || ($isIgnoreUser && $column->getName() == 'user_id');
                 })
                 ->map(function ($column) {
                     return $this->getColumnRules($column); 
