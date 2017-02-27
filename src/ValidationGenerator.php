@@ -26,11 +26,9 @@ class ValidationGenerator
             $tables = collect($this->schemaManager->listTableNames());
         }
         
-        $rules = $tables->map(function ($tableName) {
+        return $tables->mapWithKeys(function ($tableName) {
            return [$tableName => $this->getTableValidationRules($tableName)];
         });
-        
-        dd($rules);
     }
     
     public function getTableValidationRules($tableName)
@@ -38,22 +36,22 @@ class ValidationGenerator
         try {
             $columns = collect($this->schemaManager->listTableColumns($tableName));
 
-            $rules = $columns->filter(function ($column) {
+            $tableRules = $columns->filter(function ($column) {
                     return !preg_match('/\_at$/', $column->getName());
                 })
                 ->map(function ($column) {
                     return $this->getColumnRules($column); 
                 });
             
-            return $rules;
+            return $tableRules;
         } catch (DBALException $e) {
-            return [];
+            return collect([]);
         }
     }
     
     private function getColumnRules(Column $column)
     {
-        $rules = [];
+        $rules = collect([]);
         
         /*
           13 => "getType"
