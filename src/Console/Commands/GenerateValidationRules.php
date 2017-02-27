@@ -124,7 +124,7 @@ class GenerateValidationRules extends Command
 
                 $str = $ruleKey;
                 
-                if ($ruleValue) {
+                if (!is_null($ruleValue)) {
                     $str .= ':' . $ruleValue; 
                 }
 
