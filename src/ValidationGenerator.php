@@ -135,7 +135,7 @@ class ValidationGenerator
         }
         
         if (strstr($column->getName(), 'slug')) {
-            $rules['regex'] = 'regex:/^[a-z0-9]+(\_-[a-z0-9]+)*$/';       
+            $rules['regex'] = '/^[a-z0-9]+(\_-[a-z0-9]+)*$/';       
         }
         
         return $rules;
