@@ -23,11 +23,11 @@ class ValidationGenerator
         if ($table) {
             
         } else {
-            $tables = collect($this->schemaManager->listTableNames())->slice(1);
+            $tables = collect($this->schemaManager->listTableNames());
         }
         
         $rules = $tables->map(function ($tableName) {
-           return $this->getTableValidationRules($tableName);
+           return [$tableName => $this->getTableValidationRules($tableName)];
         });
         
         dd($rules);
@@ -38,9 +38,12 @@ class ValidationGenerator
         try {
             $columns = collect($this->schemaManager->listTableColumns($tableName));
 
-            $rules = $columns->map(function ($column) {
-                return $this->getColumnRules($column); 
-            });
+            $rules = $columns->filter(function ($column) {
+                    return !preg_match('/\_at$/', $column->getName());
+                })
+                ->map(function ($column) {
+                    return $this->getColumnRules($column); 
+                });
             
             return $rules;
         } catch (DBALException $e) {
@@ -84,7 +87,7 @@ class ValidationGenerator
   41 => "getQuotedName"
         */
         
-        $rules['raw'] = $column->toArray();
+        // $rules['raw'] = $column->toArray();
         
         // assume no rules
         if ($column->getAutoincrement()) {
@@ -100,6 +103,10 @@ class ValidationGenerator
         switch ($column->getType()->getBindingType()) {
             case PDO::PARAM_INT:
                 $rules['integer'] = null;
+                
+                if ($column->getUnsigned()) {
+                    $rules['min'] = 0;
+                }
                 break;
                 
             case PDO::PARAM_BOOL:
@@ -109,19 +116,30 @@ class ValidationGenerator
             case PDO::PARAM_STR:
                 switch(get_class($column->getType())) {
                     case 'Doctrine\DBAL\Types\DateTimeType':
-                        dd($column);
+                    case 'Doctrine\DBAL\Types\DateType':
+                        $rules['date'] = null;
                         break;
+                        
+                    default:
+                        $rules['max'] = $column->getLength();
                 }
-                $rules['max'] = $column->getLength();
-                $rules['type'] = $column->getType();
-                break;
-                
-                
-                
+                break;     
                    
         }
         
+        // guess by name
+        if (strstr($column->getName(), 'email')) {
+            $rules['email'] = null;       
+        }
+        
+        if (strstr($column->getName(), 'url')) {
+            $rules['url'] = null;       
+        }
+        
+        if (strstr($column->getName(), 'slug')) {
+            $rules['regex'] = 'regex:/^[a-z0-9]+(\_-[a-z0-9]+)*$/';       
+        }
+        
         return $rules;
-        dd($column->getType()->getBindingType(), $rules);
     }
 }
