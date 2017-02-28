@@ -21,10 +21,10 @@ class GenerateValidationRules extends Command
      * @var string
      */
     protected $description = 'Generate validation rules from db schema';
-    
+
     public $generator;
     public $files;
-    
+
     /**
      * Create a new command instance.
      *
@@ -44,7 +44,7 @@ class GenerateValidationRules extends Command
      */
     protected function getControllerValidateStub()
     {
-        return $this->getStubsDir() . '/controller-validate.stub';
+        return $this->getStubsDir().'/controller-validate.stub';
     }
 
     /**
@@ -54,9 +54,9 @@ class GenerateValidationRules extends Command
      */
     protected function getFormRequestStub()
     {
-        return $this->getStubsDir() . '/form-request.stub';
+        return $this->getStubsDir().'/form-request.stub';
     }
-    
+
     /**
      * Get the directory that contains our stubs.
      *
@@ -64,7 +64,7 @@ class GenerateValidationRules extends Command
      */
     private function getStubsDir()
     {
-        return __DIR__ . '/../../../stubs';
+        return __DIR__.'/../../../stubs';
     }
 
     /**
@@ -78,38 +78,38 @@ class GenerateValidationRules extends Command
         $column = $this->argument('column');
         $output = $this->option('output');
         $isIgnoreUser = $this->option('ignoreuser');
-        
-        if (!in_array($output, ['formrequest', 'controller'])) {
+
+        if (! in_array($output, ['formrequest', 'controller'])) {
             throw new \Exception('Invalid output option');
         }
-        
+
         switch ($output) {
             case 'formrequest':
                 $stubPath = $this->getFormRequestStub();
                 break;
-                
+
             case 'controller':
                 $stubPath = $this->getControllerValidateStub();
                 break;
         }
-        
-        if ($table  && $column) {
+
+        if ($table && $column) {
             if ($column) {
                 var_export($this->generator->getValidationRules($table, $column)->toArray());
+
                 return;
             }
-            
+
             var_export($this->generator->getValidationRules($table)->toArray());
+
             return;
         }
-        
+
         $this->generator->getValidationRules(null, null, $isIgnoreUser)->each(function ($rules, $tableName) use ($stubPath, $isIgnoreUser) {
             $this->buildRules($stubPath, $rules, $tableName, $isIgnoreUser);
         });
-        
-        return;
     }
-    
+
     /**
      * Build the rules.
      *
@@ -121,14 +121,13 @@ class GenerateValidationRules extends Command
     protected function buildRules($stubPath, $rules, $tableName)
     {
         $stub = $this->files->get($stubPath);
-        
-        $rulesOutput = $rules->transform(function ($columnRules) {
-            return $columnRules->map(function($ruleValue, $ruleKey) {
 
+        $rulesOutput = $rules->transform(function ($columnRules) {
+            return $columnRules->map(function ($ruleValue, $ruleKey) {
                 $str = $ruleKey;
-                
-                if (!is_null($ruleValue)) {
-                    $str .= ':' . $ruleValue; 
+
+                if (! is_null($ruleValue)) {
+                    $str .= ':'.$ruleValue;
                 }
 
                 return $str;
@@ -136,7 +135,7 @@ class GenerateValidationRules extends Command
         })->filter(function ($columnRules) {
             return $columnRules;
         })->map(function ($columnRulesText, $columnName) {
-            return "'$columnName' => '$columnRulesText',";   
+            return "'$columnName' => '$columnRulesText',";
         })->implode("\r\n            ");
 
         return $this->replaceRules($stub, $rulesOutput, $tableName); // $this->replaceNamespace($stub, $name)->replaceClass($stub, $name);
@@ -154,8 +153,8 @@ class GenerateValidationRules extends Command
         $stub = str_replace('DummyRules', $rules, $stub);
         $stub = str_replace('DummyTableName', $tableName, $stub);
 
-        $this->info($tableName . "\n");
-        $this->line($stub . "\n\n");
+        $this->info($tableName."\n");
+        $this->line($stub."\n\n");
 
         return $this;
     }

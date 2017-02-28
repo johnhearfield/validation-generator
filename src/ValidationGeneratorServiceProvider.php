@@ -6,9 +6,8 @@ use Illuminate\Support\ServiceProvider;
 
 class ValidationGeneratorServiceProvider extends ServiceProvider
 {
-
     protected $commands = [
-        'GillidandaWeb\ValidationGenerator\Console\Commands\GenerateValidationRules'
+        'GillidandaWeb\ValidationGenerator\Console\Commands\GenerateValidationRules',
     ];
 
     /**

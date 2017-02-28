@@ -4,56 +4,54 @@ namespace GillidandaWeb\ValidationGenerator;
 
 use DB;
 use PDO;
-use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Schema\Column;
 
 class ValidationGenerator
 {
     protected $schemaManager;
-    
-    public function __construct($schemaManager = Null)
+
+    public function __construct($schemaManager = null)
     {
-        $this->schemaManager = $schemaManager ? : 
+        $this->schemaManager = $schemaManager ?:
             DB::connection()->getDoctrineSchemaManager();
-            
     }
-    
+
     public function getValidationRules($table = null, $column = null, $isIgnoreUser = false)
     {
         if ($table) {
-            
         } else {
             $tables = collect($this->schemaManager->listTableNames());
         }
-        
+
         return $tables->mapWithKeys(function ($tableName) use ($isIgnoreUser) {
-           return [$tableName => $this->getTableValidationRules($tableName, $isIgnoreUser)];
+            return [$tableName => $this->getTableValidationRules($tableName, $isIgnoreUser)];
         });
     }
-    
+
     public function getTableValidationRules($tableName, $isIgnoreUser)
     {
         try {
             $columns = collect($this->schemaManager->listTableColumns($tableName));
 
             $tableRules = $columns->reject(function ($column) use ($isIgnoreUser) {
-                    return preg_match('/\_at$/', $column->getName())
+                return preg_match('/\_at$/', $column->getName())
                         || ($isIgnoreUser && $column->getName() == 'user_id');
-                })
+            })
                 ->map(function ($column) {
-                    return $this->getColumnRules($column); 
+                    return $this->getColumnRules($column);
                 });
-            
+
             return $tableRules;
         } catch (DBALException $e) {
             return collect([]);
         }
     }
-    
+
     private function getColumnRules(Column $column)
     {
         $rules = collect([]);
-        
+
         /*
           13 => "getType"
   14 => "getLength"
@@ -85,60 +83,60 @@ class ValidationGenerator
   40 => "getName"
   41 => "getQuotedName"
         */
-        
+
         // $rules['raw'] = $column->toArray();
-        
+
         // assume no rules
         if ($column->getAutoincrement()) {
-            return $rules; 
-        } 
-        
-        if ($column->getNotnull()) {
-            $rules['required'] = null; 
-        } else {
-            $rules['nullable'] = null; 
+            return $rules;
         }
-        
+
+        if ($column->getNotnull()) {
+            $rules['required'] = null;
+        } else {
+            $rules['nullable'] = null;
+        }
+
         switch ($column->getType()->getBindingType()) {
             case PDO::PARAM_INT:
                 $rules['integer'] = null;
-                
+
                 if ($column->getUnsigned()) {
                     $rules['min'] = 0;
                 }
                 break;
-                
+
             case PDO::PARAM_BOOL:
                 $rules['boolean'] = null;
                 break;
-                
+
             case PDO::PARAM_STR:
-                switch(get_class($column->getType())) {
+                switch (get_class($column->getType())) {
                     case 'Doctrine\DBAL\Types\DateTimeType':
                     case 'Doctrine\DBAL\Types\DateType':
                         $rules['date'] = null;
                         break;
-                        
+
                     default:
                         $rules['max'] = $column->getLength();
                 }
-                break;     
-                   
+                break;
+
         }
-        
+
         // guess by name
         if (strstr($column->getName(), 'email')) {
-            $rules['email'] = null;       
+            $rules['email'] = null;
         }
-        
+
         if (strstr($column->getName(), 'url')) {
-            $rules['url'] = null;       
+            $rules['url'] = null;
         }
-        
+
         if (strstr($column->getName(), 'slug')) {
-            $rules['regex'] = '/^[a-z0-9]+(\_-[a-z0-9]+)*$/';       
+            $rules['regex'] = '/^[a-z0-9]+(\_-[a-z0-9]+)*$/';
         }
-        
+
         return $rules;
     }
 }
