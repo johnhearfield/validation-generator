@@ -139,7 +139,11 @@ class GenerateValidationRules extends Command
             return "'$columnName' => '$columnRulesText',";
         })->implode("\r\n            ");
 
-        return $this->replaceRules($stub, $rulesOutput, $tableName); // $this->replaceNamespace($stub, $name)->replaceClass($stub, $name);
+        $class = \Illuminate\Support\Str::studly(\Illuminate\Support\Str::singular($tableName)) . 'Validator';
+
+        return $this->replaceRules($stub, $rulesOutput, $tableName)
+            ->replaceClass($stub, $class)
+            ->store($class, $stub);
     }
 
     /**
@@ -196,11 +200,11 @@ class GenerateValidationRules extends Command
      * @param  string  $name
      * @return string
      */
-    protected function replaceClass($stub, $name)
+    protected function replaceClass(&$stub, $name)
     {
-        $class = str_replace($this->getNamespace($name).'\\', '', $name);
+        $stub = str_replace('DummyClass', $name, $stub);
 
-        return str_replace('DummyClass', $class, $stub);
+        return $this;
     }
 
     protected function store($class, $stub)
