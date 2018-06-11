@@ -5,6 +5,7 @@ namespace GillidandaWeb\ValidationGenerator\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
 use GillidandaWeb\ValidationGenerator\ValidationGenerator;
+use Illuminate\Filesystem\Filesystem;
 
 class GenerateValidationRules extends Command
 {
@@ -200,5 +201,10 @@ class GenerateValidationRules extends Command
         $class = str_replace($this->getNamespace($name).'\\', '', $name);
 
         return str_replace('DummyClass', $class, $stub);
+    }
+
+    protected function store($class, $stub)
+    {
+        Storage::disk('local')->put('validators/'.$class.'.php', $stub);
     }
 }
