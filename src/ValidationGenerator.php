@@ -31,6 +31,19 @@ class ValidationGenerator
 
     public function getTableValidationRules($tableName, $isIgnoreUser)
     {
+        $foreignKeyRules = [];
+
+        try {
+            $foreignKeys = collect($this->schemaManager->listTableForeignKeys($tableName));
+
+            $foreignKeys->map(function($foreignKey) use(&$foreignKeyRules) {
+                $foreignKeyRules[array_first($foreignKey->getLocalColumns())]['exists'] =
+                    sprintf('%s,%s', $foreignKey->getForeignTableName(), $foreignKey->getForeignColumns()[0]);
+            });
+        } catch(\Exception $e) {
+            //
+        }
+
         try {
             $columns = collect($this->schemaManager->listTableColumns($tableName));
 
@@ -38,8 +51,8 @@ class ValidationGenerator
                 return preg_match('/\_at$/', $column->getName())
                         || ($isIgnoreUser && $column->getName() == 'user_id');
             })
-                ->map(function ($column) {
-                    return $this->getColumnRules($column);
+                ->map(function ($column) use($foreignKeyRules) {
+                    return $this->getColumnRules($column, $foreignKeyRules);
                 });
 
             return $tableRules;
@@ -48,9 +61,13 @@ class ValidationGenerator
         }
     }
 
-    private function getColumnRules(Column $column)
+    private function getColumnRules(Column $column, $foreignKeyRules)
     {
         $rules = collect([]);
+
+        if(isset($foreignKeyRules[$column->getName()])) {
+            $rules['exists'] = $foreignKeyRules[$column->getName()]['exists'];
+        }
 
         /*
           13 => "getType"
