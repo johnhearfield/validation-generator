@@ -147,10 +147,10 @@ class GenerateValidationRules extends Command
     }
 
     /**
-     * Replace the rules for the given stub.
-     *
-     * @param  string  $stub
-     * @param  string  $name
+     * Replace the rules for a given stub
+     * @param $stub
+     * @param $rules
+     * @param $tableName
      * @return $this
      */
     protected function replaceRules(&$stub, $rules, $tableName)
