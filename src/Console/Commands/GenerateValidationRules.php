@@ -5,6 +5,7 @@ namespace GillidandaWeb\ValidationGenerator\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
 use GillidandaWeb\ValidationGenerator\ValidationGenerator;
+use Illuminate\Support\Facades\Storage;
 
 class GenerateValidationRules extends Command
 {
