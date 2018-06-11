@@ -1,5 +1,5 @@
 {
-    "name": "gillidandaweb/validation-generator",
+    "name": "johnhearfield/validation-generator",
     "description": "Generate Laravel 5 validation rules from database schema.",
     "keywords": [
         "laravel",
