@@ -140,7 +140,7 @@ class GenerateValidationRules extends Command
         })->implode("\r\n            ");
 
         // TODO: Only store and replaceClass if output is formrequest, as controller only provides the rules
-        $class = \Illuminate\Support\Str::studly(\Illuminate\Support\Str::singular($tableName)) . 'FormRequest';
+        $class = \Illuminate\Support\Str::studly(\Illuminate\Support\Str::singular($tableName));
 
         return $this->replaceRules($stub, $rulesOutput, $tableName)
             ->replaceClass($stub, $class)
