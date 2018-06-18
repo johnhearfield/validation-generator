@@ -34,24 +34,13 @@ class ValidationGenerator
     {
         $foreignKeyRules = [];
 
-        try {
-            $foreignKeys = collect($this->schemaManager->listTableForeignKeys($tableName));
-
-            $foreignKeys->map(function($foreignKey) use(&$foreignKeyRules) {
-                $foreignKeyRules[array_first($foreignKey->getLocalColumns())]['exists'] =
-                    sprintf('%s,%s', $foreignKey->getForeignTableName(), $foreignKey->getForeignColumns()[0]);
-            });
-        } catch(\Exception $e) {
-            //
-        }
-
         $uniqueIndexRules = [];
 
         try {
             $columns = collect($this->schemaManager->listTableColumns($tableName));
 
+            // Parse table indexes
             $indexes = collect($this->schemaManager->listTableIndexes($tableName));
-
             $indexes->map(function(Index $index) use(&$uniqueIndexRules, $tableName) {
                 $columnName = array_first($index->getColumns());
 
@@ -59,6 +48,13 @@ class ValidationGenerator
                     $uniqueIndexRules[$columnName]['unique'] =
                         sprintf('%s,%s', $tableName, $columnName);
                 }
+            });
+
+            // Parse table foreign keys
+            $foreignKeys = collect($this->schemaManager->listTableForeignKeys($tableName));
+            $foreignKeys->map(function($foreignKey) use(&$foreignKeyRules) {
+                $foreignKeyRules[array_first($foreignKey->getLocalColumns())]['exists'] =
+                    sprintf('%s,%s', $foreignKey->getForeignTableName(), $foreignKey->getForeignColumns()[0]);
             });
 
             $tableRules = $columns->reject(function ($column) use ($isIgnoreUser) {
