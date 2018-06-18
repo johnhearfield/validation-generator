@@ -3,6 +3,7 @@
 namespace GillidandaWeb\ValidationGenerator;
 
 use DB;
+use Doctrine\DBAL\Schema\Index;
 use PDO;
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Schema\Column;
@@ -44,15 +45,28 @@ class ValidationGenerator
             //
         }
 
+        $uniqueIndexRules = [];
+
         try {
             $columns = collect($this->schemaManager->listTableColumns($tableName));
+
+            $indexes = collect($this->schemaManager->listTableIndexes($tableName));
+
+            $indexes->map(function(Index $index) use(&$uniqueIndexRules, $tableName) {
+                $columnName = array_first($index->getColumns());
+
+                if($index->isUnique()) {
+                    $uniqueIndexRules[$columnName]['unique'] =
+                        sprintf('%s,%s', $tableName, $columnName);
+                }
+            });
 
             $tableRules = $columns->reject(function ($column) use ($isIgnoreUser) {
                 return preg_match('/\_at$/', $column->getName())
                         || ($isIgnoreUser && $column->getName() == 'user_id');
             })
-                ->map(function ($column) use($foreignKeyRules) {
-                    return $this->getColumnRules($column, $foreignKeyRules);
+                ->map(function ($column) use($foreignKeyRules, $uniqueIndexRules) {
+                    return $this->getColumnRules($column, $foreignKeyRules, $uniqueIndexRules);
                 });
 
             return $tableRules;
@@ -61,12 +75,16 @@ class ValidationGenerator
         }
     }
 
-    private function getColumnRules(Column $column, $foreignKeyRules)
+    private function getColumnRules(Column $column, $foreignKeyRules, $uniqueIndexRules)
     {
         $rules = collect([]);
 
         if(isset($foreignKeyRules[$column->getName()])) {
             $rules['exists'] = $foreignKeyRules[$column->getName()]['exists'];
+        }
+
+        if(isset($uniqueIndexRules[$column->getName()])) {
+            $rules['unique'] = $uniqueIndexRules[$column->getName()]['unique'];
         }
 
         /*
